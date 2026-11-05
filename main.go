@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -19,15 +20,16 @@ const usage = `詫間寮 外泊・欠食 CLI（非公式）
 使い方:
   takuma login
   takuma status [--html saved-form.html]
-  takuma kesshoku add|remove YYYY-MM-DD --meal morning|lunch|dinner|all [--remark 備考] [--apply]
-  takuma gaihaku add|remove YYYY-MM-DD [--remark 備考] [--apply]
+  takuma kesshoku add|remove YYYY-MM-DD --meal morning|lunch|dinner|all [--remark 備考] [--apply] [--yes|-y]
+  takuma gaihaku add|remove YYYY-MM-DD [--remark 備考] [--apply] [--yes|-y]
   takuma forget
---apply省略時は表示のみ。指定時は確認入力後に送信します。`
+--apply省略時は表示のみ。指定時は確認入力後に送信します。--yes / -yで確認入力を省略します。`
 
 type options struct {
 	Command, Operation, Date, Meal, HTML string
 	Remark                               *string
 	Apply                                bool
+	Yes                                  bool
 }
 
 func parseArgs(args []string) (options, error) {
@@ -65,6 +67,8 @@ func parseArgs(args []string) (options, error) {
 			fs.StringVar(&o.Meal, "meal", "", "morning/lunch/dinner/all")
 		}
 		fs.BoolVar(&o.Apply, "apply", false, "登録する")
+		fs.BoolVar(&o.Yes, "yes", false, "確認入力を省略する")
+		fs.BoolVar(&o.Yes, "y", false, "確認入力を省略する")
 		fs.Func("remark", "備考", func(v string) error { o.Remark = &v; return nil })
 	default:
 		return o, errors.New(usage)
@@ -124,24 +128,23 @@ func readPassword() (string, error) {
 	return readLine(bufio.NewReader(tty))
 }
 func show(w io.Writer, rows []row) {
-	fmt.Fprintln(w, "日付        朝 昼 夕 泊  備考（欠=欠食、泊=外泊、·=未申請、—=入力欄なし）")
+	fmt.Fprintln(w, "Date        B  L  D  O  Remarks")
+	fmt.Fprintln(w, "----------  -  -  -  -  -------")
+	fmt.Fprintln(w, "B/L/D: breakfast/lunch/dinner; O: overnight")
+	fmt.Fprintln(w, "X: requested; .: not requested; -: unavailable")
 	for _, r := range rows {
 		values := []string{}
-		for i, field := range fieldNames {
+		for _, field := range fieldNames {
 			v, ok := r.Fields[field]
-			s := "·"
+			s := "."
 			if !ok {
-				s = "—"
+				s = "-"
 			} else if v.Checked {
-				if i == 3 {
-					s = "泊"
-				} else {
-					s = "欠"
-				}
+				s = "X"
 			}
 			values = append(values, s)
 		}
-		fmt.Fprintln(w, r.Date+"  "+strings.Join(values, "  ")+"  "+r.Remark)
+		fmt.Fprintln(w, r.Date+"  "+strings.Join(values, "  ")+"  "+strconv.QuoteToASCII(r.Remark))
 	}
 }
 func run(args []string, in io.Reader, out io.Writer) error {
@@ -226,7 +229,11 @@ func run(args []string, in io.Reader, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		if _, err = c.request(target.String(), f.payload()); err != nil {
+		s, err = c.request(target.String(), f.payload())
+		if err != nil {
+			return err
+		}
+		if err = c.confirmOTP(s, reader, out); err != nil {
 			return err
 		}
 		if _, err = c.registration(); err != nil {
@@ -284,13 +291,15 @@ func run(args []string, in io.Reader, out io.Writer) error {
 		fmt.Fprintln(out, "表示のみ。登録するには同じコマンドに --apply を付けてください。")
 		return nil
 	}
-	fmt.Fprint(out, "この変更を登録しますか？ [y/N]: ")
-	answer, err := readLine(reader)
-	if err != nil {
-		return err
-	}
-	if strings.ToLower(answer) != "y" {
-		return nil
+	if !o.Yes {
+		fmt.Fprint(out, "この変更を登録しますか？ [y/N]: ")
+		answer, err := readLine(reader)
+		if err != nil {
+			return err
+		}
+		if strings.ToLower(answer) != "y" {
+			return nil
+		}
 	}
 	latest, err := c.registration()
 	if err != nil {
