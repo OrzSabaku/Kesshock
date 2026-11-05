@@ -9,7 +9,7 @@ Goで実装した外泊・欠食申請用CLIです。Go 1.23以上でビルド�
 このフォルダでビルドして実行してください。ビルド後の実行にGoは不要です。
 
 ```sh
-go build -buildvcs=false -o takuma .
+go build -buildvcs=false -o takuma ./cmd/takuma
 ./takuma login
 ./takuma status
 ./takuma kesshoku add 2026-11-21 --meal all
@@ -19,7 +19,7 @@ go build -buildvcs=false -o takuma .
 ./takuma forget
 ```
 
-ビルドせずに`go run -buildvcs=false . login`などで実行することもできます。
+ビルドせずに`go run -buildvcs=false ./cmd/takuma login`などで実行することもできます。
 `-buildvcs=false`はGit情報がない配布フォルダでもビルドできるように指定しています。
 
 - `login`: カレントディレクトリの`.env`から学籍番号とパスワードを読み込みます。ない場合は対話入力し、パスワードは非表示にします。CLIは入力したパスワードを保存しません。

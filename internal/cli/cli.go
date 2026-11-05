@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"bufio"
@@ -147,7 +147,10 @@ func show(w io.Writer, rows []row) {
 		fmt.Fprintln(w, r.Date+"  "+strings.Join(values, "  ")+"  "+strconv.QuoteToASCII(r.Remark))
 	}
 }
-func run(args []string, in io.Reader, out io.Writer) error {
+
+// Run executes one command using the supplied input and output streams.
+// It returns errors to the caller so only the executable decides when to exit.
+func Run(args []string, in io.Reader, out io.Writer) error {
 	if len(args) > 0 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
 		fmt.Fprintln(out, usage)
 		return nil
@@ -332,10 +335,4 @@ func run(args []string, in io.Reader, out io.Writer) error {
 	}
 	fmt.Fprintln(out, "登録後の状態を再取得し、一致を確認しました。")
 	return nil
-}
-func main() {
-	if err := run(os.Args[1:], os.Stdin, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, "エラー:", err)
-		os.Exit(1)
-	}
 }

@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"bufio"
@@ -121,7 +121,7 @@ func TestLoginWithDotEnv(t *testing.T) {
 		}
 	})
 	var out bytes.Buffer
-	if err = run([]string{"login"}, strings.NewReader(""), &out); err != nil {
+	if err = Run([]string{"login"}, strings.NewReader(""), &out); err != nil {
 		t.Fatal(err)
 	}
 	if requests != 3 || strings.Contains(out.String(), "学籍番号:") || strings.Contains(out.String(), "password") {

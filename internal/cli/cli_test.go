@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"bytes"
@@ -217,7 +217,7 @@ func TestApplyWorkflow(t *testing.T) {
 				answer = "n\n"
 			}
 			var out bytes.Buffer
-			err := run(args, strings.NewReader(answer), &out)
+			err := Run(args, strings.NewReader(answer), &out)
 			expectError := scenario == "conflict" || scenario == "yes-conflict" || scenario == "post-failure" || scenario == "mismatch"
 			if (err != nil) != expectError {
 				t.Fatalf("err=%v output=%s", err, &out)
@@ -239,7 +239,7 @@ func TestOfflineStatusAndArgs(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	if err := run([]string{"status", "--html", path}, strings.NewReader(""), &out); err != nil {
+	if err := Run([]string{"status", "--html", path}, strings.NewReader(""), &out); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(out.String(), "2026/11/13") {
