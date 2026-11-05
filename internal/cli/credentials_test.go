@@ -111,7 +111,7 @@ func TestLoginWithDotEnv(t *testing.T) {
 			}
 			return response(r, "ok"), nil
 		case 3:
-			if r.URL.String() != registURL {
+			if r.URL.String() != registrationURL {
 				t.Error("expected registration check")
 			}
 			return response(r, fixture), nil

@@ -16,15 +16,15 @@ const usage = `詫間寮 外泊・欠食 CLI（非公式）
   takuma forget
 --apply省略時は表示のみ。指定時は確認入力後に送信します。--yes / -yで確認入力を省略します。`
 
-type options struct {
+type commandOptions struct {
 	Command, Operation, Date, Meal, HTML string
 	Remark                               *string
 	Apply                                bool
 	Yes                                  bool
 }
 
-func parseArgs(args []string) (options, error) {
-	o := options{}
+func parseArgs(args []string) (commandOptions, error) {
+	o := commandOptions{}
 	if len(args) == 0 {
 		return o, errors.New(usage)
 	}

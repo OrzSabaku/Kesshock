@@ -16,9 +16,9 @@ import (
 
 const baseURL = "https://gaihaku.mogsmile.com"
 const loginURL = baseURL + "/takuma/student/login!init.action"
-const registURL = baseURL + "/takuma/student/regist/regist.action"
+const registrationURL = baseURL + "/takuma/student/regist/regist.action"
 
-func checkedURL(target string) (*url.URL, error) { return resolveURL(baseURL, target) }
+func validateURL(target string) (*url.URL, error) { return resolveURL(baseURL, target) }
 func resolveURL(base, target string) (*url.URL, error) {
 	b, err := url.Parse(base)
 	if err != nil {
@@ -83,7 +83,7 @@ func (j *persistentJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	}
 }
 
-type client struct {
+type siteClient struct {
 	HTTP *http.Client
 	Jar  *persistentJar
 	Path string
@@ -100,7 +100,7 @@ func cookiePath() (string, error) {
 	}
 	return filepath.Join(root, "takuma-cli", "cookies.json"), nil
 }
-func newClient() (*client, error) {
+func newClient() (*siteClient, error) {
 	path, err := cookiePath()
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func newClient() (*client, error) {
 			return nil, errors.New("Cookieファイルが不正です。forgetして再ログインしてください。")
 		}
 		for _, r := range records {
-			u, e := checkedURL(r.Origin)
+			u, e := validateURL(r.Origin)
 			if e != nil || r.Cookie == nil {
 				return nil, errors.New("Cookieファイルが不正です。")
 			}
@@ -133,7 +133,7 @@ func newClient() (*client, error) {
 	} else if !os.IsNotExist(err) {
 		return nil, errors.New("Cookieファイルを読めません。")
 	}
-	c := &client{Jar: jar, Path: path}
+	c := &siteClient{Jar: jar, Path: path}
 	c.HTTP = &http.Client{Jar: jar, Timeout: 30 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 10 {
 			return errors.New("リダイレクトが多すぎます。")
@@ -141,12 +141,12 @@ func newClient() (*client, error) {
 		if req.Method == http.MethodPost {
 			return errors.New("リダイレクトによるPOSTの再送を拒否しました。")
 		}
-		_, err := checkedURL(req.URL.String())
+		_, err := validateURL(req.URL.String())
 		return err
 	}}
 	return c, nil
 }
-func (c *client) save() error {
+func (c *siteClient) save() error {
 	data, err := json.Marshal(c.Jar.Records)
 	if err != nil {
 		return errors.New("Cookieを保存できません。")
@@ -168,8 +168,8 @@ func (c *client) save() error {
 	}
 	return nil
 }
-func (c *client) request(target string, data []pair) (string, error) {
-	u, err := checkedURL(target)
+func (c *siteClient) request(target string, data []formValue) (string, error) {
+	u, err := validateURL(target)
 	if err != nil {
 		return "", err
 	}
@@ -190,7 +190,7 @@ func (c *client) request(target string, data []pair) (string, error) {
 		req.Header.Set("Origin", baseURL)
 		req.Header.Set("Referer", loginURL)
 		if strings.Contains(u.Path, "/regist/") {
-			req.Header.Set("Referer", registURL)
+			req.Header.Set("Referer", registrationURL)
 		}
 	}
 	response, err := c.HTTP.Do(req)
@@ -213,8 +213,8 @@ func (c *client) request(target string, data []pair) (string, error) {
 	}
 	return string(b), nil
 }
-func (c *client) registration() (*form, error) {
-	s, err := c.request(registURL, nil)
+func (c *siteClient) fetchRegistration() (*htmlForm, error) {
+	s, err := c.request(registrationURL, nil)
 	if err != nil {
 		return nil, err
 	}

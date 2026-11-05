@@ -25,7 +25,7 @@ const fixture = `<form id="regist" action="/takuma/student/regist/regist.action"
 <input type="text" name="remarkList" value="">
 <input type="submit" name="method:regist" value="登録"></form>`
 
-func mustForm(t *testing.T, s string) *form {
+func mustForm(t *testing.T, s string) *htmlForm {
 	t.Helper()
 	f, err := parseForm(s, "regist")
 	if err != nil {
@@ -35,11 +35,11 @@ func mustForm(t *testing.T, s string) *form {
 }
 func TestChangePreservesPayload(t *testing.T) {
 	f := mustForm(t, fixture)
-	before, after, err := change(f, "2026/11/14", fieldNames[:1], true, nil)
+	before, after, err := applyFormChange(f, "2026/11/14", applicationFields[:1], true, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sameState(before, after) {
+	if sameSchedule(before, after) {
 		t.Fatal("change missing")
 	}
 	encoded := encodePairs(f.payload())
@@ -58,29 +58,29 @@ func TestChangePreservesPayload(t *testing.T) {
 	if strings.Index(encoded, "dateStrList=2026%2F11%2F13") > strings.Index(encoded, "remarkList=") {
 		t.Fatal("input order changed")
 	}
-	if _, ok := values[fieldNames[1]]; ok {
+	if _, ok := values[applicationFields[1]]; ok {
 		t.Fatal("disabled input sent")
 	}
 }
 func TestChangeRejectsUnavailable(t *testing.T) {
-	for _, tc := range []struct{ date, field string }{{"2026/11/13", fieldNames[0]}, {"2026/11/14", fieldNames[1]}, {"2026/11/15", fieldNames[3]}} {
-		if _, _, err := change(mustForm(t, fixture), tc.date, []string{tc.field}, true, nil); err == nil {
+	for _, tc := range []struct{ date, field string }{{"2026/11/13", applicationFields[0]}, {"2026/11/14", applicationFields[1]}, {"2026/11/15", applicationFields[3]}} {
+		if _, _, err := applyFormChange(mustForm(t, fixture), tc.date, []string{tc.field}, true, nil); err == nil {
 			t.Fatal(tc)
 		}
 	}
 }
 func TestRemoveRemarkAndNoop(t *testing.T) {
 	f := mustForm(t, fixture)
-	a, b, err := change(f, "2026/11/13", fieldNames[3:], true, nil)
-	if err != nil || !sameState(a, b) {
+	a, b, err := applyFormChange(f, "2026/11/13", applicationFields[3:], true, nil)
+	if err != nil || !sameSchedule(a, b) {
 		t.Fatal("expected noop", err)
 	}
 	remark := "変更 + & 😀"
-	_, after, err := change(f, "2026/11/13", fieldNames[3:], false, &remark)
+	_, after, err := applyFormChange(f, "2026/11/13", applicationFields[3:], false, &remark)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if after[0].Fields[fieldNames[3]].Checked || after[0].Remark != remark {
+	if after[0].Fields[applicationFields[3]].Checked || after[0].Remark != remark {
 		t.Fatal(after)
 	}
 	if strings.Contains(encodePairs(f.payload()), "gaihakuDate=") {
@@ -88,7 +88,7 @@ func TestRemoveRemarkAndNoop(t *testing.T) {
 	}
 	short := mustForm(t, strings.Replace(fixture, `maxlength="100"`, `maxlength="1"`, 1))
 	emoji := "😀"
-	if _, _, err = change(short, "2026/11/13", fieldNames[3:], false, &emoji); err == nil {
+	if _, _, err = applyFormChange(short, "2026/11/13", applicationFields[3:], false, &emoji); err == nil {
 		t.Fatal("UTF-16 length not enforced")
 	}
 }
@@ -113,12 +113,12 @@ func TestHTMLParsing(t *testing.T) {
 }
 func TestURLValidation(t *testing.T) {
 	for _, target := range []string{"https://example.com/", "http://gaihaku.mogsmile.com/takuma/student/", "https://gaihaku.mogsmile.com/elsewhere", "https://user@gaihaku.mogsmile.com/takuma/student/", "/takuma/student/../../other"} {
-		if _, err := checkedURL(target); err == nil {
+		if _, err := validateURL(target); err == nil {
 			t.Fatal(target)
 		}
 	}
-	u, err := resolveURL(registURL, "regist.action")
-	if err != nil || u.String() != registURL {
+	u, err := resolveURL(registrationURL, "regist.action")
+	if err != nil || u.String() != registrationURL {
 		t.Fatal(u, err)
 	}
 }
@@ -128,7 +128,7 @@ func TestCookiePersistence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	u, _ := checkedURL(loginURL)
+	u, _ := validateURL(loginURL)
 	c.Jar.SetCookies(u, []*http.Cookie{{Name: "session", Value: "test-only", Path: "/takuma/student/", Secure: true, HttpOnly: true}, {Name: "expired", Value: "gone", Expires: time.Now().Add(-time.Hour)}})
 	if err = c.save(); err != nil {
 		t.Fatal(err)
@@ -192,7 +192,7 @@ func TestApplyWorkflow(t *testing.T) {
 				posts++
 				b, _ := io.ReadAll(r.Body)
 				v, _ := url.ParseQuery(string(b))
-				if v.Get("token") != "FRESH" || v.Get(fieldNames[0]) != "2026/11/14" || v.Get(fieldNames[3]) != "2026/11/13" {
+				if v.Get("token") != "FRESH" || v.Get(applicationFields[0]) != "2026/11/14" || v.Get(applicationFields[3]) != "2026/11/13" {
 					t.Errorf("unexpected submission: %v", v)
 				}
 				if scenario == "post-failure" {

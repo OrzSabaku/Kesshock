@@ -24,20 +24,20 @@ func Run(args []string, in io.Reader, out io.Writer) error {
 		return showSavedStatus(opts.HTML, out)
 	}
 
-	client, err := newClient()
+	session, err := newClient()
 	if err != nil {
 		return err
 	}
-	input := bufio.NewReader(in)
+	reader := bufio.NewReader(in)
 	if opts.Command == "login" {
-		return client.login(input, out, readPassword)
+		return session.login(reader, out, readPassword)
 	}
-	registration, err := client.registration()
+	registrationForm, err := session.fetchRegistration()
 	if err != nil {
 		return err
 	}
 	if opts.Command == "status" {
-		return showStatus(registration, out)
+		return showStatus(registrationForm, out)
 	}
-	return client.applyChange(opts, registration, input, out)
+	return session.applyChange(opts, registrationForm, reader, out)
 }

@@ -10,9 +10,9 @@ import (
 
 // OTP is submitted only when the server supplies the expected confirmation form.
 // Neither the code nor the response HTML is persisted.
-func (c *client) confirmOTP(source string, in *bufio.Reader, out io.Writer) error {
+func (c *siteClient) confirmOTP(source string, in *bufio.Reader, out io.Writer) error {
 	found := false
-	if err := tags(source, func(tag string, a input) error {
+	if err := scanHTMLTags(source, func(tag string, a htmlAttributes) error {
 		if tag == "form" && a["id"] == "tlogin" {
 			found = true
 		}
@@ -30,9 +30,9 @@ func (c *client) confirmOTP(source string, in *bufio.Reader, out io.Writer) erro
 	if err != nil {
 		return err
 	}
-	var codeField input
+	var codeField htmlAttributes
 	for _, a := range f.Inputs {
-		if a["name"] == "authCode" && !has(a, "disabled") {
+		if a["name"] == "authCode" && !hasAttribute(a, "disabled") {
 			if codeField != nil {
 				return errors.New("OTP入力欄が複数あります。")
 			}
@@ -70,7 +70,7 @@ func (c *client) confirmOTP(source string, in *bufio.Reader, out io.Writer) erro
 
 // login completes both password and optional email-code authentication before
 // checking that the protected registration form is accessible.
-func (c *client) login(in *bufio.Reader, out io.Writer, secret func() (string, error)) error {
+func (c *siteClient) login(in *bufio.Reader, out io.Writer, secret func() (string, error)) error {
 	s, err := c.request(loginURL, nil)
 	if err != nil {
 		return err
@@ -81,10 +81,10 @@ func (c *client) login(in *bufio.Reader, out io.Writer, secret func() (string, e
 	}
 	userField, passwordField := false, false
 	for _, a := range f.Inputs {
-		if a["name"] == "gakusekiNo" && !has(a, "disabled") {
+		if a["name"] == "gakusekiNo" && !hasAttribute(a, "disabled") {
 			userField = true
 		}
-		if a["name"] == "loginPass" && !has(a, "disabled") {
+		if a["name"] == "loginPass" && !hasAttribute(a, "disabled") {
 			passwordField = true
 		}
 	}
@@ -116,7 +116,7 @@ func (c *client) login(in *bufio.Reader, out io.Writer, secret func() (string, e
 	if err = c.confirmOTP(s, in, out); err != nil {
 		return err
 	}
-	if _, err = c.registration(); err != nil {
+	if _, err = c.fetchRegistration(); err != nil {
 		return err
 	}
 	fmt.Fprintln(out, "ログインを確認しました。")

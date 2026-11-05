@@ -11,18 +11,18 @@ func showSavedStatus(path string, out io.Writer) error {
 	if err != nil {
 		return errors.New("HTMLファイルを読めません。")
 	}
-	registration, err := parseForm(string(source), "regist")
+	registrationForm, err := parseForm(string(source), "regist")
 	if err != nil {
 		return err
 	}
-	return showStatus(registration, out)
+	return showStatus(registrationForm, out)
 }
 
-func showStatus(registration *form, out io.Writer) error {
-	rows, err := formState(registration)
+func showStatus(registrationForm *htmlForm, out io.Writer) error {
+	rows, err := scheduleFromForm(registrationForm)
 	if err != nil {
 		return err
 	}
-	show(out, rows)
+	renderSchedule(out, rows)
 	return nil
 }
