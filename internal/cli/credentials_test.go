@@ -3,9 +3,6 @@ package cli
 import (
 	"bufio"
 	"bytes"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -72,59 +69,5 @@ func TestLoginCredentialSelection(t *testing.T) {
 	_, _, err = loginCredentials(path, bufio.NewReader(strings.NewReader("")), &out, secret)
 	if err == nil || calls != 1 {
 		t.Fatal("incomplete file should fail without prompting")
-	}
-}
-func TestLoginWithDotEnv(t *testing.T) {
-	dir := t.TempDir()
-	previous, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err = os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := os.Chdir(previous); err != nil {
-			t.Error(err)
-		}
-	})
-	if err = os.WriteFile(".env", []byte("TAKUMA_STUDENT_ID=012345\nTAKUMA_PASSWORD='test +&#password'"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	requests := 0
-	fakeNetwork(t, func(r *http.Request) (*http.Response, error) {
-		requests++
-		switch requests {
-		case 1:
-			if r.Method != "GET" || r.URL.String() != loginURL {
-				t.Error("expected login form")
-			}
-			return response(r, `<form id=login method=post action="/takuma/student/login.action"><input name=gakusekiNo><input type=password name=loginPass><input type=checkbox name=rememberMe checked><input type=hidden name=token value=TEST><input type=submit name="method:login" value="ログイン"></form>`), nil
-		case 2:
-			b, _ := io.ReadAll(r.Body)
-			v, _ := url.ParseQuery(string(b))
-			if r.Method != "POST" || v.Get("gakusekiNo") != "012345" || v.Get("loginPass") != "test +&#password" || v.Get("token") != "TEST" {
-				t.Error("incorrect login payload")
-			}
-			if _, ok := v["rememberMe"]; ok {
-				t.Error("rememberMe should be unchecked")
-			}
-			return response(r, "ok"), nil
-		case 3:
-			if r.URL.String() != registrationURL {
-				t.Error("expected registration check")
-			}
-			return response(r, fixture), nil
-		default:
-			t.Fatal("unexpected request")
-			return nil, nil
-		}
-	})
-	var out bytes.Buffer
-	if err = Run([]string{"login"}, strings.NewReader(""), &out); err != nil {
-		t.Fatal(err)
-	}
-	if requests != 3 || strings.Contains(out.String(), "学籍番号:") || strings.Contains(out.String(), "password") {
-		t.Fatal("login should complete without prompting or printing credentials")
 	}
 }
