@@ -262,3 +262,20 @@ func TestRedirectRejection(t *testing.T) {
 		t.Fatal("cross-origin redirect accepted")
 	}
 }
+
+func TestInvalidRemarkLeavesFormUnchanged(t *testing.T) {
+	for _, attribute := range []string{`type="text" maxlength="1"`, `type="text" maxlength="invalid"`, `type="text" disabled`, `type="hidden"`} {
+		t.Run(attribute, func(t *testing.T) {
+			source := strings.Replace(fixture, `type="text" name="remarkList" value="帰省 &amp; 帰宅" maxlength="100"`, `name="remarkList" value="帰省 &amp; 帰宅" `+attribute, 1)
+			form := mustForm(t, source)
+			before := encodePairs(form.payload())
+			remark := "長すぎる備考"
+			if _, _, err := applyFormChange(form, "2026/11/13", applicationFields[3:], false, &remark); err == nil {
+				t.Fatal("expected validation error")
+			}
+			if actual := encodePairs(form.payload()); actual != before {
+				t.Fatal("rejected edit changed the form")
+			}
+		})
+	}
+}
