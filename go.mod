@@ -1,3 +1,3 @@
-module takuma-cli
+module kesshock
 
 go 1.23

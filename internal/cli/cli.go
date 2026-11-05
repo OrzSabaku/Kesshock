@@ -2,15 +2,14 @@ package cli
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 )
 
 // Run executes one command using the supplied input and output streams.
 // It returns errors to the caller so only the executable decides when to exit.
 func Run(args []string, in io.Reader, out io.Writer) error {
-	if len(args) > 0 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help") {
-		fmt.Fprintln(out, usage)
+	if isHelpRequest(args) {
+		printHelp(out)
 		return nil
 	}
 	opts, err := parseArgs(args)

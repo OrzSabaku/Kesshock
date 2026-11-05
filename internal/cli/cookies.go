@@ -61,6 +61,8 @@ func (j *persistentJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	}
 }
 
+// cookiePath keeps the original directory so renaming the executable does not
+// invalidate existing sessions or leave old cookies behind after forget.
 func cookiePath() (string, error) {
 	root := os.Getenv("XDG_STATE_HOME")
 	if root == "" {

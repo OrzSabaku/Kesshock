@@ -7,15 +7,6 @@ import (
 	"time"
 )
 
-const usage = `詫間寮 外泊・欠食 CLI（非公式）
-使い方:
-  takuma login
-  takuma status [--html saved-form.html]
-  takuma kesshoku add|remove YYYY-MM-DD --meal morning|lunch|dinner|all [--remark 備考] [--apply] [--yes|-y]
-  takuma gaihaku add|remove YYYY-MM-DD [--remark 備考] [--apply] [--yes|-y]
-  takuma forget
---apply省略時は表示のみ。指定時は確認入力後に送信します。--yes / -yで確認入力を省略します。`
-
 type commandOptions struct {
 	Command, Operation, Date, Meal, HTML string
 	Remark                               *string

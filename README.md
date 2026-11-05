@@ -1,4 +1,6 @@
-# 詫間寮 外泊・欠食 CLI（非公式）
+# Kesshock
+
+詫間寮 外泊・欠食 CLI（非公式）
 
 Goで実装した外泊・欠食申請用CLIです。Go 1.23以上でビルドできます。
 外部Goパッケージは不要です。ログイン時のパスワード非表示入力には、Linux / macOSの端末と`stty`を使用します。
@@ -9,17 +11,17 @@ Goで実装した外泊・欠食申請用CLIです。Go 1.23以上でビルド�
 このフォルダでビルドして実行してください。ビルド後の実行にGoは不要です。
 
 ```sh
-go build -buildvcs=false -o takuma ./cmd/takuma
-./takuma login
-./takuma status
-./takuma kesshoku add 2026-11-21 --meal all
-./takuma kesshoku add 2026-11-21 --meal all --apply
-./takuma gaihaku add 2026-11-20 --remark 帰省 --apply
-./takuma kesshoku remove 2026-11-20 --meal dinner --apply
-./takuma forget
+go build -buildvcs=false -o kesshock ./cmd/kesshock
+./kesshock login
+./kesshock status
+./kesshock kesshoku add 2026-11-21 --meal all
+./kesshock kesshoku add 2026-11-21 --meal all --apply
+./kesshock gaihaku add 2026-11-20 --remark 帰省 --apply
+./kesshock kesshoku remove 2026-11-20 --meal dinner --apply
+./kesshock forget
 ```
 
-ビルドせずに`go run -buildvcs=false ./cmd/takuma login`などで実行することもできます。
+ビルドせずに`go run -buildvcs=false ./cmd/kesshock login`などで実行することもできます。
 `-buildvcs=false`はGit情報がない配布フォルダでもビルドできるように指定しています。
 
 - `login`: カレントディレクトリの`.env`から学籍番号とパスワードを読み込みます。ない場合は対話入力し、パスワードは非表示にします。CLIは入力したパスワードを保存しません。
@@ -27,10 +29,10 @@ go build -buildvcs=false -o takuma ./cmd/takuma
 - `status`: サイトの最新フォームから申請状態を読みます。表示はUS-ASCIIのみで、B/L/Dは朝昼夕、Oは外泊、Xは申請あり、.は未申請、-は入力欄なしです。備考の日本語などは`\uXXXX`形式で表示します。喫食確定を意味しません。
 - `add` / `remove`: 欠食または外泊の追加・解除です。`--meal`はmorning/lunch/dinner/all。
 - `--apply`: 省略すると変更前後の表示だけ。付けると確認入力後に送信します。
-- `--yes` / `-y`: `--apply`と併用すると確認入力を省略します。例: `./takuma-cli gaihaku add 2026-11-20 --apply -y`。変更前後の表示・競合検出・送信後の検証は行います。単独では送信しません。
+- `--yes` / `-y`: `--apply`と併用すると確認入力を省略します。例: `./kesshock gaihaku add 2026-11-20 --apply -y`。変更前後の表示・競合検出・送信後の検証は行います。単独では送信しません。
 - `--remark`: 指定日の備考を変更します。省略時は既存の値を保持します。`--remark ''`で空にできます。
 - `forget`: CLIに保存されたCookieを削除します。サーバー側のセッション無効化は行いません。
-- `--help`: コマンド一覧を表示します。
+- `--help` / `-h`: ASCIIロゴとコマンド一覧を表示します。引数なしの起動でも表示します。
 
 変更コマンドは、操作と日付の後にオプションを指定してください。
 
@@ -48,7 +50,7 @@ TAKUMA_STUDENT_ID=学籍番号
 TAKUMA_PASSWORD='パスワード'
 ```
 
-このディレクトリで`./takuma login`を実行すると、対話入力せずにログインします。
+このディレクトリで`./kesshock login`を実行すると、対話入力せずにログインします。
 `.env`がある場合はその値を使い、どちらかが未設定・空ならエラーになります。
 シェルの環境変数からは読み込みません。
 
@@ -63,6 +65,7 @@ TAKUMA_PASSWORD='パスワード'
 ## CookieとPython版からの移行
 
 Cookieは`${XDG_STATE_HOME:-~/.local/state}/takuma-cli/cookies.json`に保存します。
+旧CLIとの互換性のため、保存先名と`TAKUMA_*`設定名は維持しています。
 ディレクトリは700、ファイルは600。Cookieを他人に渡さないでください。
 永続ログインのrememberMeはチェックしません。セッション期限切れなら再度loginしてください。
 
@@ -85,7 +88,7 @@ HTTP 200だけで成功扱いにはしません。通信失敗時やリダイレ
 ```sh
 go test -v ./...
 go vet ./...
-./takuma status --html saved-form.html
+./kesshock status --html saved-form.html
 ```
 
 テストは、既存申請保持・同名項目の順序・備考のエンコードと文字数制限・変更不可項目の拒否・

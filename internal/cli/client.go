@@ -65,7 +65,7 @@ func (c *siteClient) request(target string, data []formValue) (string, error) {
 	if err != nil {
 		return "", errors.New("リクエストを作成できません。")
 	}
-	req.Header.Set("User-Agent", "takuma-cli/1.0")
+	req.Header.Set("User-Agent", "kesshock/1.0")
 	req.Header.Set("Accept", "text/html")
 	if data != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"takuma-cli/internal/cli"
+	"kesshock/internal/cli"
 )
 
 func main() {
