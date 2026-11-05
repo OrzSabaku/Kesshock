@@ -208,12 +208,7 @@ func run(args []string, in io.Reader, out io.Writer) error {
 		if !userField || !passwordField {
 			return errors.New("ログイン入力欄が見つかりません。画面変更の可能性があります。")
 		}
-		fmt.Fprint(out, "学籍番号: ")
-		user, err := readLine(reader)
-		if err != nil {
-			return err
-		}
-		password, err := readPassword()
+		user, password, err := loginCredentials(".env", reader, out, readPassword)
 		if err != nil {
 			return err
 		}
