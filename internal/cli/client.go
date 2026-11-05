@@ -50,6 +50,8 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return err
 }
 
+// request uses nil data for GET and non-nil data for POST. It never includes
+// request bodies or response HTML in errors because both can contain secrets.
 func (c *siteClient) request(target string, data []formValue) (string, error) {
 	u, err := validateURL(target)
 	if err != nil {

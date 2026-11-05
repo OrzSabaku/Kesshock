@@ -8,10 +8,14 @@ import (
 )
 
 type commandOptions struct {
-	Command, Operation, Date, Meal, HTML string
-	Remark                               *string
-	Apply                                bool
-	Yes                                  bool
+	Command   string
+	Operation string
+	Date      string // Uses the site's YYYY/MM/DD format after argument validation.
+	Meal      string
+	HTML      string
+	Remark    *string // nil preserves the existing remark; a pointer to "" clears it.
+	Apply     bool
+	Yes       bool
 }
 
 func parseArgs(args []string) (commandOptions, error) {

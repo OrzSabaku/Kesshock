@@ -32,6 +32,7 @@ func mustForm(t *testing.T, s string) *htmlForm {
 
 func (f transportFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
+// fakeNetwork replaces process-wide HTTP state, so callers must not use t.Parallel.
 func fakeNetwork(t *testing.T, fn transportFunc) {
 	t.Helper()
 	old := http.DefaultTransport

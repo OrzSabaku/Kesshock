@@ -61,7 +61,7 @@ func fillLoginForm(form *htmlForm, studentID, password string) {
 		case "loginPass":
 			attributes["value"] = password
 		case "rememberMe":
-			// Long-lived login remains opt-in; storing cookies alone does not enable it.
+			// Do not enable long-lived sessions implicitly when replaying the server form.
 			delete(attributes, "checked")
 		}
 	}

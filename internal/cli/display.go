@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// renderSchedule escapes user-supplied remarks to keep output ASCII-only and
+// prevent embedded newlines or terminal control sequences from changing the layout.
 func renderSchedule(w io.Writer, rows []scheduleRow) {
 	fmt.Fprintln(w, "Date        B  L  D  O  Remarks")
 	fmt.Fprintln(w, "----------  -  -  -  -  -------")
