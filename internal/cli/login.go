@@ -67,3 +67,58 @@ func (c *client) confirmOTP(source string, in *bufio.Reader, out io.Writer) erro
 	}
 	return nil
 }
+
+// login completes both password and optional email-code authentication before
+// checking that the protected registration form is accessible.
+func (c *client) login(in *bufio.Reader, out io.Writer, secret func() (string, error)) error {
+	s, err := c.request(loginURL, nil)
+	if err != nil {
+		return err
+	}
+	f, err := parseForm(s, "login")
+	if err != nil {
+		return err
+	}
+	userField, passwordField := false, false
+	for _, a := range f.Inputs {
+		if a["name"] == "gakusekiNo" && !has(a, "disabled") {
+			userField = true
+		}
+		if a["name"] == "loginPass" && !has(a, "disabled") {
+			passwordField = true
+		}
+	}
+	if !userField || !passwordField {
+		return errors.New("ログイン入力欄が見つかりません。画面変更の可能性があります。")
+	}
+	user, password, err := loginCredentials(".env", in, out, secret)
+	if err != nil {
+		return err
+	}
+	for _, a := range f.Inputs {
+		switch a["name"] {
+		case "gakusekiNo":
+			a["value"] = user
+		case "loginPass":
+			a["value"] = password
+		case "rememberMe":
+			delete(a, "checked")
+		}
+	}
+	target, err := resolveURL(loginURL, f.Action)
+	if err != nil {
+		return err
+	}
+	s, err = c.request(target.String(), f.payload())
+	if err != nil {
+		return err
+	}
+	if err = c.confirmOTP(s, in, out); err != nil {
+		return err
+	}
+	if _, err = c.registration(); err != nil {
+		return err
+	}
+	fmt.Fprintln(out, "ログインを確認しました。")
+	return nil
+}
