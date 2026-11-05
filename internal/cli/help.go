@@ -5,11 +5,13 @@ import (
 	"io"
 )
 
-const logo = `  K   K  EEEEE   SSSS   SSSS  H   H   OOO    CCCC  K   K
-  K  K   E      S      S      H   H  O   O  C      K  K
-  KKK    EEEE    SSS    SSS   HHHHH  O   O  C      KKK
-  K  K   E          S      S  H   H  O   O  C      K  K
-  K   K  EEEEE  SSSS   SSSS   H   H   OOO    CCCC  K   K`
+// Generated with: toilet -f ascii9 -w 120 Kesshock
+// Embed the result so displaying help never requires toilet on the user's machine.
+const logo = ` m    m                      #                    #
+ #  m"   mmm    mmm    mmm   # mm    mmm    mmm   #   m
+ #m#    #"  #  #   "  #   "  #"  #  #" "#  #"  "  # m"
+ #  #m  #""""   """m   """m  #   #  #   #  #      #"#
+ #   "m "#mm"  "mmm"  "mmm"  #   #  "#m#"  "#mm"  #  "m`
 
 const usage = `Kesshock - 詫間寮 外泊・欠食 CLI（非公式）
 使い方:
