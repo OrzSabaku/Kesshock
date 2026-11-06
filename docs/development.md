@@ -57,4 +57,4 @@ go build -buildvcs=false -o kesshock ./cmd/kesshock
 
 ## ヘルプのロゴ
 
-ロゴは`toilet -f ascii9 -w 120 Kesshock`で生成したAAを`internal/cli/help.go`に埋め込んでいます。再生成するときは空行と行末の空白を取り除き、US-ASCIIのみになっていることを確認してください。利用時やビルド時に`toilet`は不要です。
+ロゴは`toilet`で生成したAAを`internal/cli/help.go`に埋め込んでいます。再生成するときは空行と行末の空白を取り除き、US-ASCIIのみになっていることを確認してください。
